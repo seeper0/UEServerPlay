@@ -1,0 +1,12 @@
+Client/.idea
+Client/.vs
+Client/Binaries
+Client/DerivedDataCache
+Client/Intermediate
+Client/Plugins/Developer
+Client/Saved
+Client/.vsconfig
+Client/Client.sln
+Server/.vs
+Server/x64
+Server/Server.vcxproj.*
