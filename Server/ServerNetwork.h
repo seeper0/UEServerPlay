@@ -29,7 +29,5 @@ private:
 
     SOCKET ListenSocket = INVALID_SOCKET;
     std::map<SOCKET, class User*> UserList;
-    WSAEVENT AcceptHandel = nullptr;
-    std::vector<WSAEVENT> EventList;
 };
 

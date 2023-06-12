@@ -7,7 +7,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-//https://www.geeksforgeeks.org/handling-multiple-clients-on-server-with-multithreading-using-socket-programming-in-c-cpp/
 ServerNetwork::ServerNetwork()
 {
     Initialize();
@@ -17,18 +16,23 @@ ServerNetwork::~ServerNetwork()
 {
 }
 
+//unsigned __stdcall ClientSession(void* data)
+//{
+//    SOCKET client_socket = (SOCKET)data;
+//    // Process the client.
+//}
+
 void ServerNetwork::Run()
 {
     while (true)
     {
-        DWORD WaitResult = WSAWaitForMultipleEvents(EventList.size(), EventList.data(), FALSE, WSA_INFINITE, FALSE);
-        DWORD Index = WaitResult - WSA_WAIT_EVENT_0;
-        BOOL bResult = WSAResetEvent(EventList[Index]);
-        if (EventList[Index] == AcceptHandel)
-        {
-            Accept();
-        }
-        else
+        //unsigned threadID;
+        //HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, &ClientSession, (void*)client_socket, 0, &threadID);
+
+        Accept();
+        //{
+        //}
+        //else
         {
             std::list<User*> DisconnectedList;
             for (auto& Item : UserList)
@@ -44,15 +48,8 @@ void ServerNetwork::Run()
             for (auto& Item : DisconnectedList)
             {
                 SOCKET Socket = Item->GetSocket();
-                WSAEVENT RecvHandle = Item->GetRecvHandel();
                 delete Item;
                 UserList.erase(Socket);
-
-                auto it = std::find(EventList.begin(), EventList.end(), RecvHandle);
-                if (it != EventList.end())
-                {
-                    EventList.erase(it);
-                }
             }
         }
     }
@@ -140,10 +137,6 @@ int32 ServerNetwork::Initialize()
     //u_long NonBlockingMode = 1;
     //ioctlsocket(ListenSocket, FIONBIO, &NonBlockingMode);
 
-    AcceptHandel = WSACreateEvent();
-    WSAEventSelect(ListenSocket, AcceptHandel, FD_ACCEPT);
-    EventList.push_back(AcceptHandel);
-
     return 1;
 }
 
@@ -170,13 +163,8 @@ SOCKET ServerNetwork::Accept()
             cout << Host << " connected on port %" << ntohs(ClientSockInfo.sin_port) << endl;
         }
 
-        WSAEVENT RecvHandel = WSACreateEvent();
-        WSAEventSelect(Socket, RecvHandel, FD_READ | FD_WRITE | FD_CLOSE);
-
-        User* NewUser = new User(this, Socket, RecvHandel);
+        User* NewUser = new User(this, Socket);
         UserList.insert({ Socket, NewUser });
-        EventList.push_back(RecvHandel);
-        WSAResetEvent(RecvHandel);
     }
     return Socket;
 }

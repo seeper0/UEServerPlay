@@ -2,10 +2,9 @@
 #include "ServerNetwork.h"
 #include <iostream>
 
-User::User(class ServerNetwork* InServer, const SOCKET InSocket, const WSAEVENT InRecvHandel)
+User::User(class ServerNetwork* InServer, const SOCKET InSocket)
     : Server(InServer)
     , Socket(InSocket)
-    , RecvHandel(InRecvHandel)
     , UserId(InSocket) // 대충 uuid 생성이라 치자
 {
     std::cerr << "Connected @" << Socket << std::endl;

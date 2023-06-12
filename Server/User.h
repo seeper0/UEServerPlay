@@ -12,11 +12,10 @@ namespace Packet
 class User
 {
 public:
-    User(class ServerNetwork* InServer, const SOCKET InSocket, const WSAEVENT InRecvHandel);
+    User(class ServerNetwork* InServer, const SOCKET InSocket);
     ~User();
 
     SOCKET GetSocket() const { return Socket; };
-    WSAEVENT GetRecvHandel() const { return RecvHandel; };
 
     void OnRqLogin(const Packet::RqLogin* Pkt);
     void OnRqHeartbeat(const Packet::RqHeartbeat* Pkt);
@@ -25,7 +24,6 @@ public:
 private:
     ServerNetwork* Server = nullptr;
     SOCKET      Socket = INVALID_SOCKET;
-    WSAEVENT    RecvHandel = nullptr;
     uint64      UserId;
     FVector		Location;
     FVector		Direction;
