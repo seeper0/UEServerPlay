@@ -39,7 +39,7 @@ const Packet::Header* Network::CombinePacket(const Packet::Header* HeaderPacket,
 }
 
 
-#define CASE_PACKET(IN_SOCKET, PACKET_NAME) case HeaderType::PACKET_NAME: PACKET_NAME(IN_SOCKET, static_cast<const Packet::PACKET_NAME*>(CombinedPacket)); break;
+#define CASE_PACKET(IN_SOCKET, PACKET_NAME) case HeaderType::PACKET_NAME: On##PACKET_NAME(IN_SOCKET, static_cast<const Packet::PACKET_NAME*>(CombinedPacket)); break
 void Network::ProcessPacket(const uint64 InSocket, const Packet::Header* HeaderPacket, char* RawBodyPacket)
 {
 	if (HeaderPacket == nullptr || RawBodyPacket == nullptr)
@@ -49,15 +49,37 @@ void Network::ProcessPacket(const uint64 InSocket, const Packet::Header* HeaderP
 
 	switch (HeaderPacket->Type)
 	{
-		CASE_PACKET(InSocket, RqLogin)
-			CASE_PACKET(InSocket, RpLogin)
-			CASE_PACKET(InSocket, RqHeartbeat)
-			CASE_PACKET(InSocket, RpHeartbeat)
-			CASE_PACKET(InSocket, RqMove)
-			CASE_PACKET(InSocket, NtMove)
+		CASE_PACKET(InSocket, RqLogin);
+		CASE_PACKET(InSocket, RpLogin);
+		CASE_PACKET(InSocket, NtSpawn);
+		CASE_PACKET(InSocket, RqHeartbeat);
+		CASE_PACKET(InSocket, RpHeartbeat);
+		CASE_PACKET(InSocket, RqMove);
+		CASE_PACKET(InSocket, NtMove);
 	}
 }
 #undef CASE_PACKET
+
+int32 Network::SendPacket(const uint64 InSocket, Packet::Header* InPacket)
+{
+	unsigned long SendBytes = 0;
+	constexpr unsigned long SendFlag = 0;
+	WSABUF PacketBuf;
+	PacketBuf.len = InPacket->GetPacketSize();
+	PacketBuf.buf = const_cast<CHAR*>(reinterpret_cast<const CHAR*>(InPacket));
+
+	WSAOVERLAPPED SendOverlapped;
+	SecureZeroMemory((PVOID) & SendOverlapped, sizeof (WSAOVERLAPPED));
+	SendOverlapped.hEvent = WSACreateEvent();
+	if (SendOverlapped.hEvent == nullptr)
+	{
+		return -1;
+	}
+	
+	const int SendResult = WSASend(InSocket, &PacketBuf, 1, &SendBytes, SendFlag, &SendOverlapped, nullptr);
+	WSAResetEvent(SendOverlapped.hEvent);
+	return SendResult;
+}
 
 int32 Network::ReceivePacket(const uint64 InSocket)
 {
@@ -69,33 +91,63 @@ int32 Network::ReceivePacket(const uint64 InSocket)
 		FMemory::Memzero(PACKET_HEADER, sizeof(Packet::Header));
 		FMemory::Memzero(PACKET_BODY, MAX_PACKET);
 
-		int32 HeaderSize = recv(InSocket, PACKET_HEADER, sizeof(Packet::Header), 0);
-		if (HeaderSize == sizeof(Packet::Header))
+		// Header
 		{
-			Packet::Header* Header = reinterpret_cast<Packet::Header*>(PACKET_HEADER);
-			int32 BodySize = recv(InSocket, PACKET_BODY, Header->BodySize, 0);
-			if (BodySize == Header->BodySize)
+			unsigned long HeaderRecved = 0, HeaderFlag = 0;
+			WSABUF HeaderBuf;
+			WSAOVERLAPPED HeaderOverlapped;
+			SecureZeroMemory((PVOID)&HeaderOverlapped, sizeof(WSAOVERLAPPED));
+			HeaderBuf.len = sizeof(Packet::Header);
+			HeaderBuf.buf = PACKET_HEADER;
+
+			const int HeaderResult = WSARecv(InSocket, &HeaderBuf, 1, &HeaderRecved, &HeaderFlag, nullptr, nullptr);
+			const int HeaderError = WSAGetLastError();
+			if ((HeaderResult == SOCKET_ERROR) && (HeaderError != WSA_IO_PENDING) && (HeaderError != WSAEWOULDBLOCK))
 			{
-				ProcessPacket(InSocket, Header, PACKET_BODY);
+				return -1;
 			}
-			else
+			if (HeaderError == WSAEWOULDBLOCK || HeaderError == WSA_IO_PENDING)
 			{
-				// body error
+				return WSAEWOULDBLOCK;
+			}
+			if (HeaderRecved == 0)
+			{
+				return WSAEDISCON;
+			}
+			if (HeaderRecved != sizeof(Packet::Header))
+			{
 				return -2;
 			}
+			WSAResetEvent(HeaderOverlapped.hEvent);
 		}
-		else if (HeaderSize == 0)
+
+		// Body
+		Packet::Header* Header = reinterpret_cast<Packet::Header*>(PACKET_HEADER);
+		if(Header->BodySize > 0) // �ٵ� ���� ��� skip~
 		{
-			// 큐가 비었다면 정상이다.
-			return 1;
-		}
-		else
-		{
-			// header error
-			return -1;
+			unsigned long BodyRecved = 0, BodyFlag = 0;
+			WSABUF BodyBuf;
+			WSAOVERLAPPED BodyOverlapped;
+			SecureZeroMemory((PVOID)&BodyOverlapped, sizeof(WSAOVERLAPPED));
+			BodyBuf.len = Header->BodySize;
+			BodyBuf.buf = PACKET_BODY;
+			const int BodyResult = WSARecv(InSocket, &BodyBuf, 1, &BodyRecved, &BodyFlag, nullptr, nullptr);
+			const int BodyError = WSAGetLastError();
+
+			if (BodyResult == SOCKET_ERROR)
+			{
+				return -3;
+			}
+			if (BodyRecved != Header->BodySize)
+			{
+				return -4;
+			}
+			WSAResetEvent(BodyOverlapped.hEvent);
+			ProcessPacket(InSocket, Header, PACKET_BODY);
 		}
 	}
 	// what error?
-	return -3;
+	return -10;
 }
+
 

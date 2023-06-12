@@ -1,10 +1,5 @@
-﻿#include <iostream>
-#include <WS2tcpip.h>
-#include <rpc.h>
+﻿#include "ServerNetwork.h"
 #pragma comment (lib, "ws2_32.lib")
-#pragma comment(lib, "Rpcrt4.lib")
-
-#include "ServerNetwork.h"
 
 using std::cout;
 using std::cerr;

@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
 #include <WS2tcpip.h>
-#include <rpc.h>
 #include <map>
+#include <vector>
 #include "../Client/Source/Client/Network/Common/Network.h"
 
 class ServerNetwork final : public Network
@@ -13,20 +13,23 @@ public:
 
 public:
     void Run();
+    void NotiPacket(const uint64 InSocket, Packet::Header* InPacket);
 
 protected:
-    virtual void RqLogin(const uint64 InSocket, const Packet::RqLogin* Pkt) override;
-    virtual void RqHeartbeat(const uint64 InSocket, const Packet::RqHeartbeat* Pkt) override;
-    virtual void RqMove(const uint64 InSocket, const Packet::RqMove* Pkt) override;
+    virtual void OnConnected(const uint64 InSocket) override;
+    virtual void OnDisconnected(const uint64 InSocket) override;
+    virtual void OnRqLogin(const uint64 InSocket, const Packet::RqLogin* InPacket) override;
+    virtual void OnRqHeartbeat(const uint64 InSocket, const Packet::RqHeartbeat* InPacket) override;
+    virtual void OnRqMove(const uint64 InSocket, const Packet::RqMove* InPacket) override;
 
 private:
     int32 Initialize();
     SOCKET Accept();
-    void AddNewUser(const SOCKET NewSocket);
     void Cleanup();
 
-    SOCKET ServerSocket = INVALID_SOCKET;
-    sockaddr_in ClientSockInfo;
+    SOCKET ListenSocket = INVALID_SOCKET;
     std::map<SOCKET, class User*> UserList;
+    WSAEVENT AcceptHandel = nullptr;
+    std::vector<WSAEVENT> EventList;
 };
 

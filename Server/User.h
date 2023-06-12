@@ -1,4 +1,5 @@
 #pragma once
+#include "../Client/Source/Client/Network/Common/Packet.h"
 #include <WS2tcpip.h>
 
 namespace Packet
@@ -11,16 +12,22 @@ namespace Packet
 class User
 {
 public:
-    User(class ServerNetwork* InServer, const SOCKET InSocket);
-    SOCKET GetSocket() const { return Socket; };
+    User(class ServerNetwork* InServer, const SOCKET InSocket, const WSAEVENT InRecvHandel);
+    ~User();
 
-    void RqLogin(const Packet::RqLogin* Pkt);
-    void RqHeartbeat(const Packet::RqHeartbeat* Pkt);
-    void RqMove(const Packet::RqMove* Pkt);
+    SOCKET GetSocket() const { return Socket; };
+    WSAEVENT GetRecvHandel() const { return RecvHandel; };
+
+    void OnRqLogin(const Packet::RqLogin* Pkt);
+    void OnRqHeartbeat(const Packet::RqHeartbeat* Pkt);
+    void OnRqMove(const Packet::RqMove* Pkt);
 
 private:
     ServerNetwork* Server = nullptr;
-    UUID Id;
-    SOCKET Socket = INVALID_SOCKET;
+    SOCKET      Socket = INVALID_SOCKET;
+    WSAEVENT    RecvHandel = nullptr;
+    uint64      UserId;
+    FVector		Location;
+    FVector		Direction;
 };
 

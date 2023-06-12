@@ -8,8 +8,8 @@
 #ifndef __UNREAL__ // only server
 struct FVector
 {
-	FVector() : X(0), Y(0), Z(0)
-	{}
+	FVector(double x, double y, double z) : X(x), Y(y), Z(z) {}
+	FVector() : X(0), Y(0), Z(0) {}
 	double X, Y, Z;
 };
 
@@ -37,6 +37,7 @@ namespace Packet
 		None,
 		RqLogin,
 		RpLogin,
+		NtSpawn,
 		RqHeartbeat,
 		RpHeartbeat,
 		RqMove,
@@ -49,50 +50,58 @@ namespace Packet
 		{}
 		HeaderType Type;
 		int16 BodySize = 0;
+		int32 GetPacketSize() const { return sizeof(Header) + BodySize; }
 	};
 
 	struct RqLogin : Header
 	{
 		RqLogin() : Header(HeaderType::RqLogin, sizeof(RqLogin)) {}
-		FVector		Location;
-		FVector		Direction;
 	};
 
 	struct RpLogin : Header
 	{
-		GENERATED_PACKET(RpLogin)
+		GENERATED_PACKET(RpLogin);
 
-			int32		UserID = 0;
+		uint64		UserId = 0;
+		FVector		Location;
+		FVector		Direction;
+	};
+
+	struct NtSpawn : Header
+	{
+		GENERATED_PACKET(NtSpawn);
+
+		uint64		UserId = 0;
 		FVector		Location;
 		FVector		Direction;
 	};
 
 	struct RqHeartbeat : Header
 	{
-		GENERATED_PACKET(RqHeartbeat)
+		GENERATED_PACKET(RqHeartbeat);
 	};
 
 	struct RpHeartbeat : Header
 	{
-		GENERATED_PACKET(RpHeartbeat)
+		GENERATED_PACKET(RpHeartbeat);
 
-			uint64		Timestamp = 0;
+		uint64		Timestamp = 0;
 	};
 
 	struct RqMove : Header
 	{
-		GENERATED_PACKET(RqMove)
+		GENERATED_PACKET(RqMove);
 
-			FVector		Location;
+		FVector		Location;
 		FVector		Direction;
 		uint64		Timestamp = 0;
 	};
 
 	struct NtMove : Header
 	{
-		GENERATED_PACKET(NtMove)
+		GENERATED_PACKET(NtMove);
 
-			int32		UserID;
+		uint64		UserId = 0;
 		FVector		Location;
 		FVector		Direction;
 		uint64		Timestamp = 0;

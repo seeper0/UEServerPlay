@@ -1,11 +1,13 @@
 #include "ServerNetwork.h"
 #include <iostream>
+#include <list>
 #include "User.h"
 
 using std::cout;
 using std::cerr;
 using std::endl;
 
+//https://www.geeksforgeeks.org/handling-multiple-clients-on-server-with-multithreading-using-socket-programming-in-c-cpp/
 ServerNetwork::ServerNetwork()
 {
     Initialize();
@@ -19,36 +21,76 @@ void ServerNetwork::Run()
 {
     while (true)
     {
-        Sleep(0);
-        SOCKET NewSocket = Accept();
-        if (NewSocket != INVALID_SOCKET)
+        DWORD WaitResult = WSAWaitForMultipleEvents(EventList.size(), EventList.data(), FALSE, WSA_INFINITE, FALSE);
+        DWORD Index = WaitResult - WSA_WAIT_EVENT_0;
+        BOOL bResult = WSAResetEvent(EventList[Index]);
+        if (EventList[Index] == AcceptHandel)
         {
-            AddNewUser(NewSocket);
+            Accept();
         }
         else
         {
+            std::list<User*> DisconnectedList;
             for (auto& Item : UserList)
             {
                 User* CurrentUser = Item.second;
-                ReceivePacket(CurrentUser->GetSocket());
+                int32 Error = ReceivePacket(CurrentUser->GetSocket());
+                if (Error < 0 || Error == WSAEDISCON)
+                {
+                    DisconnectedList.push_back(CurrentUser);
+                }
+            }
+
+            for (auto& Item : DisconnectedList)
+            {
+                SOCKET Socket = Item->GetSocket();
+                WSAEVENT RecvHandle = Item->GetRecvHandel();
+                delete Item;
+                UserList.erase(Socket);
+
+                auto it = std::find(EventList.begin(), EventList.end(), RecvHandle);
+                if (it != EventList.end())
+                {
+                    EventList.erase(it);
+                }
             }
         }
     }
 }
 
-#define CALL_PACKET(IN_SOCKET, PACKET_NAME) auto it = UserList.find(IN_SOCKET); if (it != UserList.end()) { it->second->PACKET_NAME(Pkt); }
+void ServerNetwork::NotiPacket(const uint64 InSocket, Packet::Header* InPacket)
+{
+    for (auto& Item : UserList)
+    {
+        User* CurrentUser = Item.second;
+        if (CurrentUser->GetSocket() != InSocket)
+        {
+            SendPacket(CurrentUser->GetSocket(), InPacket);
+        }
+    }
+}
 
-void ServerNetwork::RqLogin(const uint64 InSocket, const Packet::RqLogin* Pkt)
+void ServerNetwork::OnConnected(const uint64 InSocket)
+{
+}
+
+void ServerNetwork::OnDisconnected(const uint64 InSocket)
+{
+}
+
+#define CALL_PACKET(IN_SOCKET, PACKET_NAME) auto it = UserList.find(IN_SOCKET); if (it != UserList.end()) { it->second->On##PACKET_NAME(InPacket); }
+
+void ServerNetwork::OnRqLogin(const uint64 InSocket, const Packet::RqLogin* InPacket)
 {
     CALL_PACKET(InSocket, RqLogin);
 }
 
-void ServerNetwork::RqHeartbeat(const uint64 InSocket, const Packet::RqHeartbeat* Pkt)
+void ServerNetwork::OnRqHeartbeat(const uint64 InSocket, const Packet::RqHeartbeat* InPacket)
 {
     CALL_PACKET(InSocket, RqHeartbeat);
 }
 
-void ServerNetwork::RqMove(const uint64 InSocket, const Packet::RqMove* Pkt)
+void ServerNetwork::OnRqMove(const uint64 InSocket, const Packet::RqMove* InPacket)
 {
     CALL_PACKET(InSocket, RqMove);
 }
@@ -64,8 +106,8 @@ int32 ServerNetwork::Initialize()
         return -1;
     }
 
-    ServerSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); // 3번 째 인자 0도 OK
-    if (ServerSocket == INVALID_SOCKET)
+    ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); // 3번 째 인자 0도 OK
+    if (ListenSocket == INVALID_SOCKET)
     {
         cerr << "Can't create a socket! Quitting" << endl;
         WSACleanup();
@@ -77,57 +119,68 @@ int32 ServerNetwork::Initialize()
     SockAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
     SockAddr.sin_port = htons(SERVER_PORT);
 
-    int32 BindResult = bind(ServerSocket, reinterpret_cast<sockaddr*>(&SockAddr), sizeof(SockAddr));
+    int32 BindResult = bind(ListenSocket, reinterpret_cast<sockaddr*>(&SockAddr), sizeof(SockAddr));
     if (BindResult == SOCKET_ERROR)
     {
         cerr << "Can't bind a socket! Quitting" << endl;
-        closesocket(ServerSocket);
+        closesocket(ListenSocket);
         WSACleanup();
         return -3;
     }
 
-    int32 ListenResult = listen(ServerSocket, SOMAXCONN);
+    int32 ListenResult = listen(ListenSocket, SOMAXCONN);
     if (ListenResult == SOCKET_ERROR)
     {
         cerr << "Can't listen a socket! Quitting" << endl;
-        closesocket(ServerSocket);
+        closesocket(ListenSocket);
         WSACleanup();
         return -4;
     }
 
-    u_long NonBlockingMode = 1;
-    ioctlsocket(ServerSocket, FIONBIO, &NonBlockingMode);
+    //u_long NonBlockingMode = 1;
+    //ioctlsocket(ListenSocket, FIONBIO, &NonBlockingMode);
+
+    AcceptHandel = WSACreateEvent();
+    WSAEventSelect(ListenSocket, AcceptHandel, FD_ACCEPT);
+    EventList.push_back(AcceptHandel);
 
     return 1;
 }
 
 SOCKET ServerNetwork::Accept()
 {
+    sockaddr_in ClientSockInfo;
     int32 ClientSize = sizeof(ClientSockInfo);
-    return accept(ServerSocket, reinterpret_cast<sockaddr*>(&ClientSockInfo), &ClientSize);
+    SOCKET Socket = WSAAccept(ListenSocket, reinterpret_cast<SOCKADDR*>(&ClientSockInfo), &ClientSize, nullptr, 0 );
+    if (Socket != INVALID_SOCKET)
+    {
+        // 접속 정보라.. 딱히 필요 없는 부분
+        char Host[NI_MAXHOST];
+        char Service[NI_MAXHOST];
+        ZeroMemory(Host, NI_MAXHOST);
+        ZeroMemory(Service, NI_MAXHOST);
+
+        if (getnameinfo((sockaddr*)&ClientSockInfo, sizeof(ClientSockInfo), Host, NI_MAXHOST, Service, NI_MAXSERV, 0) == 0)
+        {
+            cout << Host << " connected on port $" << Service << endl;
+        }
+        else
+        {
+            inet_ntop(AF_INET, &ClientSockInfo.sin_addr, Host, NI_MAXHOST);
+            cout << Host << " connected on port %" << ntohs(ClientSockInfo.sin_port) << endl;
+        }
+
+        WSAEVENT RecvHandel = WSACreateEvent();
+        WSAEventSelect(Socket, RecvHandel, FD_READ | FD_WRITE | FD_CLOSE);
+
+        User* NewUser = new User(this, Socket, RecvHandel);
+        UserList.insert({ Socket, NewUser });
+        EventList.push_back(RecvHandel);
+        WSAResetEvent(RecvHandel);
+    }
+    return Socket;
 }
 
-void ServerNetwork::AddNewUser(const SOCKET NewSocket)
-{
-    // 접속 정보라.. 딱히 필요 없는 부분
-    //char Host[NI_MAXHOST];
-    //char Service[NI_MAXHOST];
-    //ZeroMemory(Host, NI_MAXHOST);
-    //ZeroMemory(Service, NI_MAXHOST);
-
-    //if (getnameinfo((sockaddr*)&ClientSockInfo, sizeof(ClientSockInfo), Host, NI_MAXHOST, Service, NI_MAXSERV, 0) == 0)
-    //{
-    //    cout << Host << " connected ON port " << Service << endl;
-    //}
-    //else
-    //{
-    //    inet_ntop(AF_INET, &ClientSockInfo.sin_addr, Host, NI_MAXHOST);
-    //    cout << Host << " connected on port " << ntohs(ClientSockInfo.sin_port) << endl;
-    //}
-
-    User* NewUser = new User(this, NewSocket);
-    UserList.insert({ NewSocket, NewUser });
-}
 
 void ServerNetwork::Cleanup()
 {
@@ -138,7 +191,7 @@ void ServerNetwork::Cleanup()
     }
     UserList.clear();
 
-    closesocket(ServerSocket);
-    ServerSocket = INVALID_SOCKET;
+    closesocket(ListenSocket);
+    ListenSocket = INVALID_SOCKET;
     WSACleanup();
 }

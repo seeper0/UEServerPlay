@@ -51,6 +51,10 @@ int FClientNetwork::Connect()
 		return -4;
 	}
 
+	u_long NonBlockingMode = 1;
+	ioctlsocket(ClientSocket, FIONBIO, &NonBlockingMode);
+
+	OnConnected(ClientSocket);
 	return 1;
 }
 
@@ -69,15 +73,34 @@ void FClientNetwork::Disconnect()
 	Cleanup();	
 }
 
-void FClientNetwork::RpLogin(const uint64 InSocket, const Packet::RpLogin* Pkt)
+int32 FClientNetwork::SendPacket(Packet::Header* InPacket)
+{
+	return Network::SendPacket(ClientSocket, InPacket);
+}
+
+void FClientNetwork::OnConnected(const uint64)
+{
+	Packet::RqLogin Request;
+	SendPacket(&Request);
+}
+
+void FClientNetwork::OnDisconnected(const uint64)
 {
 }
 
-void FClientNetwork::RpHeartbeat(const uint64 InSocket, const Packet::RpHeartbeat* Pkt)
+void FClientNetwork::OnRpLogin(const uint64, const Packet::RpLogin* InPacket)
 {
 }
 
-void FClientNetwork::NtMove(const uint64 InSocket, const Packet::NtMove* Pkt)
+void FClientNetwork::OnNtSpawn(const uint64 InSocket, const Packet::NtSpawn* InPacket)
+{
+}
+
+void FClientNetwork::OnRpHeartbeat(const uint64, const Packet::RpHeartbeat* InPacket)
+{
+}
+
+void FClientNetwork::OnNtMove(const uint64, const Packet::NtMove* InPacket)
 {
 }
 

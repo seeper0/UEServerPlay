@@ -7,6 +7,7 @@ Client/Plugins/Developer
 Client/Saved
 Client/.vsconfig
 Client/Client.sln
+Server/.idea
 Server/.vs
 Server/x64
 Server/Server.vcxproj.*
