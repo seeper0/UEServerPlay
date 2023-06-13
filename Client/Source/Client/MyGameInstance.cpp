@@ -2,11 +2,16 @@
 
 
 #include "MyGameInstance.h"
+#include "LocalCharacter.h"
+
 #undef TEXT
 #include <WS2tcpip.h>
-
-#include "LocalCharacter.h"
 #include "HAL/Platform.h" // for TEXT
+
+namespace
+{
+	constexpr float MOVE_INTERVAL = 0.1f;	
+}
 
 DEFINE_LOG_CATEGORY_STATIC(LogClient, Log, All);
 
@@ -26,6 +31,11 @@ void UMyGameInstance::Shutdown()
 	Disconnect();
 	FTSTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
 	Super::Shutdown();
+}
+
+bool UMyGameInstance::IsConnected() const
+{
+	return ClientSocket != INVALID_SOCKET;
 }
 
 int UMyGameInstance::Connect()
@@ -89,14 +99,27 @@ bool UMyGameInstance::Tick(float DeltaSeconds)
 		}
 	}
 
-	if(ClientSocket != INVALID_SOCKET)
+	if(ClientSocket == INVALID_SOCKET || LocalPlayer == nullptr)
+		return true;
+
+	const int32 Result = ReceivePacket(ClientSocket);
+	if (Result < 0 || Result == WSAEDISCON)
 	{
-		const int32 Result = ReceivePacket(ClientSocket);
-		if (Result < 0 || Result == WSAEDISCON)
-		{
-			UE_LOG(LogClient, Error, TEXT("Disconnected, Err #%d"), Result);
-			Cleanup();
-		}
+		UE_LOG(LogClient, Error, TEXT("Disconnected, Err #%d"), Result);
+		Cleanup();
+		return true;
+	}
+
+	MovementSentTimerTime += DeltaSeconds;
+	if(MovementSentTimerTime > MOVE_INTERVAL)
+	{
+		Packet::RqMove Packet;
+		Packet.Timestamp = GetTickCount64();
+		Packet.Location = LocalPlayer->GetActorLocation();
+		Packet.Direction = LocalPlayer->GetActorForwardVector();
+		Packet.FaceDirection = PlayerController->GetControlRotation().Vector();
+		SendPacket(&Packet);
+		MovementSentTimerTime = 0;
 	}
 	
 	return true;
@@ -130,7 +153,7 @@ void UMyGameInstance::OnDisconnected(const uint64)
 {
 }
 
-void UMyGameInstance::OnRpLogin(const uint64 Uint64, const Packet::RpLogin* InPacket)
+void UMyGameInstance::OnRpLogin(const uint64, const Packet::RpLogin* InPacket)
 {
 	if(LocalPlayer)
 	{
@@ -140,7 +163,7 @@ void UMyGameInstance::OnRpLogin(const uint64 Uint64, const Packet::RpLogin* InPa
 	}
 }
 
-void UMyGameInstance::OnNtSpawn(const uint64 InSocket, const Packet::NtSpawn* InPacket)
+void UMyGameInstance::OnNtSpawn(const uint64, const Packet::NtSpawn* InPacket)
 {
 	const FString Path = TEXT("Class'/Game/ThirdPerson/Blueprints/BP_RemoteCharacter.BP_RemoteCharacter_C'");
 	if(UClass* PlayerBP = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), nullptr, *Path)))
@@ -159,10 +182,15 @@ void UMyGameInstance::OnNtSpawn(const uint64 InSocket, const Packet::NtSpawn* In
 	}
 }
 
-void UMyGameInstance::OnRpHeartbeat(const uint64 Uint64, const Packet::RpHeartbeat* InPacket)
+void UMyGameInstance::OnRpHeartbeat(const uint64, const Packet::RpHeartbeat* InPacket)
 {
 }
 
-void UMyGameInstance::OnNtMove(const uint64 Uint64, const Packet::NtMove* InPacket)
+void UMyGameInstance::OnNtMove(const uint64, const Packet::NtMove* InPacket)
 {
+	auto Remote = PlayerMap.Find(InPacket->UserId);
+	if(Remote)
+	{
+		Remote->GetInterface()->NtMove(InPacket);
+	}
 }

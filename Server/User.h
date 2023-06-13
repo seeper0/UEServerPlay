@@ -27,5 +27,6 @@ private:
     uint64      UserId;
     FVector		Location;
     FVector		Direction;
+    FVector		FaceDirection;
 };
 

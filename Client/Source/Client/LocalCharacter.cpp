@@ -10,7 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "LocalMovementComponent.h"
-
+#include "MyGameInstance.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ALocalCharacter
@@ -66,6 +66,13 @@ void ALocalCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	MyGameInstance = GetGameInstance<UMyGameInstance>();
+}
+
+void ALocalCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -3,6 +3,7 @@
 
 #include "RemoteCharacter.h"
 #include "RemoteMovementComponent.h"
+#include "Network/Packet.h"
 
 
 // Sets default values
@@ -33,5 +34,11 @@ void ARemoteCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void ARemoteCharacter::NtMove(const Packet::NtMove* InPacket)
+{
+	SetActorLocationAndRotation(InPacket->Location, InPacket->Direction.ToOrientationRotator());
+	//InPacket->FaceDirection
 }
 

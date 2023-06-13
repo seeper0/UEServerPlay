@@ -61,12 +61,17 @@ void User::OnRqMove(const Packet::RqMove* InPacket)
     if (Server == nullptr)
         return;
 
+    Location = InPacket->Location;
+    Direction = InPacket->Direction;
+    FaceDirection = InPacket->FaceDirection;
+
     // Notify
     {
         Packet::NtMove Packet;
         Packet.UserId = UserId;
         Packet.Location = Location;
         Packet.Direction = Direction;
+        Packet.FaceDirection = FaceDirection;
         Server->NotiPacket(Socket, &Packet);
     }
 }

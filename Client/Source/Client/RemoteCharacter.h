@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ServerSpawnable.h"
 #include "GameFramework/Character.h"
 #include "RemoteCharacter.generated.h"
 
 UCLASS()
-class CLIENT_API ARemoteCharacter : public ACharacter
+class CLIENT_API ARemoteCharacter : public ACharacter, public IServerSpawnable
 {
 	GENERATED_BODY()
 
@@ -26,4 +27,5 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void  NtMove(const Packet::NtMove* InPacket) override;
 };

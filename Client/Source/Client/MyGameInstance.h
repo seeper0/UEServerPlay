@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <Chaos/AABB.h>
-
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Network/Network.h"
@@ -20,6 +18,8 @@ public:
 	UMyGameInstance();
 	virtual void Init() override;
 	virtual void Shutdown() override;
+	bool IsConnected() const;
+	int32 SendPacket(Packet::Header* InPacket);
 
 protected: // socket 값은 ClientSocket 와 동일하므로 필요 없다. 
 	virtual void OnConnected(const uint64) override;
@@ -33,12 +33,12 @@ private:
 	int Connect();
 	bool Tick(float DeltaSeconds);
 	void Disconnect();
-	int32 SendPacket(Packet::Header* InPacket);
 	
 	void Cleanup();
 
 	FTSTicker::FDelegateHandle TickDelegateHandle;
 	uint64 ClientSocket;
+	float MovementSentTimerTime = 0.0f;
 
 	UPROPERTY()
 	APlayerController* PlayerController = nullptr;

@@ -6,6 +6,11 @@
 #include "UObject/Interface.h"
 #include "ServerSpawnable.generated.h"
 
+namespace Packet
+{
+	struct NtMove;
+}
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UServerSpawnable : public UInterface
@@ -21,9 +26,9 @@ class CLIENT_API IServerSpawnable
 	GENERATED_BODY()
 
 public:
-public:
 	void Initialize(uint64 InUserId);
 	uint64 GetUserId() const { return UserId; }
+	virtual void  NtMove(const Packet::NtMove* InPacket) {}
 
 protected:
 	uint64		UserId = 0;

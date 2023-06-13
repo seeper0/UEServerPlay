@@ -94,6 +94,7 @@ namespace Packet
 
 		FVector		Location;
 		FVector		Direction;
+		FVector		FaceDirection;
 		uint64		Timestamp = 0;
 	};
 
@@ -104,6 +105,7 @@ namespace Packet
 		uint64		UserId = 0;
 		FVector		Location;
 		FVector		Direction;
+		FVector		FaceDirection;
 		uint64		Timestamp = 0;
 	};
 }
