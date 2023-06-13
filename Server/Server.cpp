@@ -1,4 +1,4 @@
-﻿#include "ServerNetwork.h"
+#include "ServerNetwork.h"
 #pragma comment (lib, "ws2_32.lib")
 
 using std::cout;

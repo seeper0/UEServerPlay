@@ -113,7 +113,7 @@ int32 ServerNetwork::Initialize()
         return -1;
     }
 
-    ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); // 3¹ø Â° ÀÎÀÚ 0µµ OK
+    ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); // 3ë²ˆ ì§¸ ì¸ì 0ë„ OK
     if (ListenSocket == INVALID_SOCKET)
     {
         cerr << "Can't create a socket! Quitting" << endl;
@@ -121,7 +121,7 @@ int32 ServerNetwork::Initialize()
         return -2;
     }
 
-    sockaddr_in SockAddr{}; // ±âº» ÃÊ±âÈ­ ±ÇÀå
+    sockaddr_in SockAddr{}; // ê¸°ë³¸ ì´ˆê¸°í™” ê¶Œì¥
     SockAddr.sin_family = AF_INET;
     SockAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
     SockAddr.sin_port = htons(SERVER_PORT);
@@ -154,7 +154,7 @@ SOCKET ServerNetwork::Accept()
     SOCKET Socket = accept(ListenSocket, reinterpret_cast<SOCKADDR*>(&ClientSockInfo), &ClientSize);
     if (Socket != INVALID_SOCKET)
     {
-        // Á¢¼Ó Á¤º¸¶ó.. µüÈ÷ ÇÊ¿ä ¾ø´Â ºÎºĞ
+        // ì ‘ì† ì •ë³´ë¼.. ë”±íˆ í•„ìš” ì—†ëŠ” ë¶€ë¶„
         char Host[NI_MAXHOST];
         char Service[NI_MAXHOST];
         ZeroMemory(Host, NI_MAXHOST);

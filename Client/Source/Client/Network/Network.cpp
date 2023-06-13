@@ -123,7 +123,7 @@ int32 Network::ReceivePacket(const uint64 InSocket)
 
 		// Body
 		Packet::Header* Header = reinterpret_cast<Packet::Header*>(PACKET_HEADER);
-		if(Header->BodySize > 0) // 0이면 body가 없다.
+		if(Header->BodySize > 0) // 0일 경우 body 없는 정상 패킷
 		{
 			unsigned long BodyRecved = 0, BodyFlag = 0;
 			WSABUF BodyBuf;

@@ -17,9 +17,9 @@ public:
 
     SOCKET GetSocket() const { return Socket; };
 
-    void OnRqLogin(const Packet::RqLogin* Pkt);
-    void OnRqHeartbeat(const Packet::RqHeartbeat* Pkt);
-    void OnRqMove(const Packet::RqMove* Pkt);
+    void OnRqLogin(const Packet::RqLogin* InPacket);
+    void OnRqHeartbeat(const Packet::RqHeartbeat* InPacket);
+    void OnRqMove(const Packet::RqMove* InPacket);
 
 private:
     ServerNetwork* Server = nullptr;

@@ -5,7 +5,7 @@
 User::User(class ServerNetwork* InServer, const SOCKET InSocket)
     : Server(InServer)
     , Socket(InSocket)
-    , UserId(InSocket) // ´ëÃæ uuid »ý¼ºÀÌ¶ó Ä¡ÀÚ
+    , UserId(InSocket) // ëŒ€ì¶© uuid ìƒì„±ì´ë¼ ì¹˜ìž
 {
     u_long NonBlockingMode = 1;
     ioctlsocket(Socket, FIONBIO, &NonBlockingMode);
@@ -19,7 +19,7 @@ User::~User()
     closesocket(Socket);
 }
 
-void User::OnRqLogin(const Packet::RqLogin* Pkt)
+void User::OnRqLogin(const Packet::RqLogin* InPacket)
 {
     if (Server == nullptr)
         return;
@@ -46,11 +46,28 @@ void User::OnRqLogin(const Packet::RqLogin* Pkt)
     }
 }
 
-void User::OnRqHeartbeat(const Packet::RqHeartbeat* Pkt)
+void User::OnRqHeartbeat(const Packet::RqHeartbeat* InPacket)
 {
+    if (Server == nullptr)
+        return;
+
+    Packet::RpHeartbeat Packet;
+    Packet.Timestamp = GetTickCount64();
+    Server->SendPacket(Socket, &Packet);
 }
 
-void User::OnRqMove(const Packet::RqMove* Pkt)
+void User::OnRqMove(const Packet::RqMove* InPacket)
 {
+    if (Server == nullptr)
+        return;
+
+    // Notify
+    {
+        Packet::NtMove Packet;
+        Packet.UserId = UserId;
+        Packet.Location = Location;
+        Packet.Direction = Direction;
+        Server->NotiPacket(Socket, &Packet);
+    }
 }
 
