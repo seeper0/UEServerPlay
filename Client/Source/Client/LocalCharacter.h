@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
-#include "ClientCharacter.generated.h"
+#include "ServerSpawnable.h"
+#include "LocalCharacter.generated.h"
 
 
 UCLASS(config=Game)
-class AClientCharacter : public ACharacter
+class ALocalCharacter : public ACharacter, public IServerSpawnable
 {
 	GENERATED_BODY()
 
@@ -38,7 +39,7 @@ class AClientCharacter : public ACharacter
 	class UInputAction* LookAction;
 
 public:
-	AClientCharacter();
+	ALocalCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
 
 protected:

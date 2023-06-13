@@ -5,7 +5,7 @@
 #undef TEXT
 #include <WS2tcpip.h>
 
-#include "ClientCharacter.h"
+#include "LocalCharacter.h"
 #include "HAL/Platform.h" // for TEXT
 
 DEFINE_LOG_CATEGORY_STATIC(LogClient, Log, All);
@@ -82,15 +82,21 @@ bool UMyGameInstance::Tick(float DeltaSeconds)
 	}
 	if(LocalPlayer == nullptr && PlayerController != nullptr)
 	{
-		LocalPlayer = Cast<AClientCharacter>(PlayerController->GetLocalPlayer());
-		Connect();
+		LocalPlayer = Cast<ALocalCharacter>(PlayerController->GetCharacter());
+		if (LocalPlayer != nullptr && ClientSocket == INVALID_SOCKET)
+		{
+			Connect();
+		}
 	}
-	
-	const int32 Result = ReceivePacket(ClientSocket);
-	if(Result <= 0)
+
+	if(ClientSocket != INVALID_SOCKET)
 	{
-		UE_LOG(LogClient, Error, TEXT("Disconnected, Err #%d"), Result);
-		Cleanup();
+		const int32 Result = ReceivePacket(ClientSocket);
+		if (Result < 0 || Result == WSAEDISCON)
+		{
+			UE_LOG(LogClient, Error, TEXT("Disconnected, Err #%d"), Result);
+			Cleanup();
+		}
 	}
 	
 	return true;
@@ -98,6 +104,7 @@ bool UMyGameInstance::Tick(float DeltaSeconds)
 
 void UMyGameInstance::Disconnect()
 {
+	PlayerMap.Empty();
 	Cleanup();	
 }
 
@@ -128,12 +135,28 @@ void UMyGameInstance::OnRpLogin(const uint64 Uint64, const Packet::RpLogin* InPa
 	if(LocalPlayer)
 	{
 		const FRotator Rotator = InPacket->Direction.ToOrientationRotator();
+		PlayerController->SetControlRotation(Rotator);
 		LocalPlayer->SetActorLocationAndRotation(InPacket->Location, Rotator);
 	}
 }
 
 void UMyGameInstance::OnNtSpawn(const uint64 InSocket, const Packet::NtSpawn* InPacket)
 {
+	const FString Path = TEXT("Class'/Game/ThirdPerson/Blueprints/BP_RemoteCharacter.BP_RemoteCharacter_C'");
+	if(UClass* PlayerBP = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), nullptr, *Path)))
+	{
+		FActorSpawnParameters SpawnInfo;
+		SpawnInfo.Instigator = nullptr;
+		SpawnInfo.ObjectFlags |= RF_Transient;	// We never want to save default player pawns into a map
+
+		const FTransform SpawnTransform(InPacket->Direction.ToOrientationRotator(), InPacket->Location);
+		APawn* Pawn = GetWorld()->SpawnActor<APawn>(PlayerBP, SpawnTransform, SpawnInfo);
+		if(TScriptInterface<IServerSpawnable> Remote = TScriptInterface<IServerSpawnable>(Pawn))
+		{
+			Remote->Initialize(InPacket->UserId);
+			PlayerMap.Add(InPacket->UserId, Remote);
+		}
+	}
 }
 
 void UMyGameInstance::OnRpHeartbeat(const uint64 Uint64, const Packet::RpHeartbeat* InPacket)

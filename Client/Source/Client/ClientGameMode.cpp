@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ClientGameMode.h"
-#include "ClientCharacter.h"
+#include "LocalCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
 AClientGameMode::AClientGameMode()

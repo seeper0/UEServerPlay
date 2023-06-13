@@ -43,7 +43,7 @@ private:
 	UPROPERTY()
 	APlayerController* PlayerController = nullptr;
 	UPROPERTY()
-	class AClientCharacter* LocalPlayer = nullptr;
+	class ALocalCharacter* LocalPlayer = nullptr;
 	UPROPERTY()
-	TMap<uint64, AClientCharacter*> PlayerMap;
+	TMap<uint64, TScriptInterface<class IServerSpawnable>> PlayerMap;
 };

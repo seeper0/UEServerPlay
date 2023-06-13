@@ -143,8 +143,8 @@ int32 Network::ReceivePacket(const uint64 InSocket)
 				return -4;
 			}
 			WSAResetEvent(BodyOverlapped.hEvent);
-			ProcessPacket(InSocket, Header, PACKET_BODY);
 		}
+		ProcessPacket(InSocket, Header, PACKET_BODY);
 	}
 	// what error?
 	return -10;
