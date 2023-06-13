@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 #include <mutex>
-#include "../Client/Source/Client/Network/Common/Network.h"
+#include "../Client/Source/Client/Network/Network.h"
 
 class ServerNetwork final : public Network
 {

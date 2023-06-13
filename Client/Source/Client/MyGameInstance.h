@@ -6,7 +6,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "Network/Common/Network.h"
+#include "Network/Network.h"
 #include "MyGameInstance.generated.h"
 
 /**

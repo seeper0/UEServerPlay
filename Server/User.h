@@ -1,5 +1,5 @@
 #pragma once
-#include "../Client/Source/Client/Network/Common/Packet.h"
+#include "../Client/Source/Client/Network/Packet.h"
 #include <WS2tcpip.h>
 
 namespace Packet
