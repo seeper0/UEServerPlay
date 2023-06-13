@@ -1,6 +1,7 @@
 #include "ServerNetwork.h"
 #include <iostream>
 #include <list>
+#include <process.h>
 #include "User.h"
 
 using std::cout;
@@ -16,23 +17,19 @@ ServerNetwork::~ServerNetwork()
 {
 }
 
-//unsigned __stdcall ClientSession(void* data)
-//{
-//    SOCKET client_socket = (SOCKET)data;
-//    // Process the client.
-//}
+unsigned __stdcall ServerNetwork::StartRecvThread(void* data)
+{
+    ServerNetwork* Server = reinterpret_cast<ServerNetwork*>(data);
+    Server->RecvThread();
+    return 0;
+}
 
-void ServerNetwork::Run()
+void ServerNetwork::RecvThread()
 {
     while (true)
     {
-        //unsigned threadID;
-        //HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, &ClientSession, (void*)client_socket, 0, &threadID);
-
-        Accept();
-        //{
-        //}
-        //else
+        Sleep(1);
+        ThreadLock.lock();
         {
             std::list<User*> DisconnectedList;
             for (auto& Item : UserList)
@@ -52,6 +49,19 @@ void ServerNetwork::Run()
                 UserList.erase(Socket);
             }
         }
+        ThreadLock.unlock();
+    }
+}
+
+void ServerNetwork::Run()
+{
+    unsigned threadID;
+    HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, &ServerNetwork::StartRecvThread, (void*)this, 0, &threadID);
+
+    while (true)
+    {
+        Sleep(0);
+        Accept();
     }
 }
 
@@ -134,9 +144,6 @@ int32 ServerNetwork::Initialize()
         return -4;
     }
 
-    //u_long NonBlockingMode = 1;
-    //ioctlsocket(ListenSocket, FIONBIO, &NonBlockingMode);
-
     return 1;
 }
 
@@ -144,7 +151,7 @@ SOCKET ServerNetwork::Accept()
 {
     sockaddr_in ClientSockInfo;
     int32 ClientSize = sizeof(ClientSockInfo);
-    SOCKET Socket = WSAAccept(ListenSocket, reinterpret_cast<SOCKADDR*>(&ClientSockInfo), &ClientSize, nullptr, 0 );
+    SOCKET Socket = accept(ListenSocket, reinterpret_cast<SOCKADDR*>(&ClientSockInfo), &ClientSize);
     if (Socket != INVALID_SOCKET)
     {
         // 접속 정보라.. 딱히 필요 없는 부분
@@ -163,8 +170,12 @@ SOCKET ServerNetwork::Accept()
             cout << Host << " connected on port %" << ntohs(ClientSockInfo.sin_port) << endl;
         }
 
-        User* NewUser = new User(this, Socket);
-        UserList.insert({ Socket, NewUser });
+        ThreadLock.lock();
+        {
+            User* NewUser = new User(this, Socket);
+            UserList.insert({ Socket, NewUser });
+        }
+        ThreadLock.unlock();
     }
     return Socket;
 }

@@ -7,6 +7,9 @@ User::User(class ServerNetwork* InServer, const SOCKET InSocket)
     , Socket(InSocket)
     , UserId(InSocket) // 대충 uuid 생성이라 치자
 {
+    u_long NonBlockingMode = 1;
+    ioctlsocket(Socket, FIONBIO, &NonBlockingMode);
+
     std::cerr << "Connected @" << Socket << std::endl;
 }
 
