@@ -26,6 +26,7 @@ protected: // socket 값은 ClientSocket 와 동일하므로 필요 없다.
 	virtual void OnDisconnected(const uint64) override;
 	virtual void OnRpLogin(const uint64, const Packet::RpLogin* InPacket) override;
 	virtual void OnNtSpawn(const uint64 InSocket, const Packet::NtSpawn* InPacket) override;
+	virtual void OnNtLeave(const uint64 InSocket, const Packet::NtLeave* InPacket) override;
 	virtual void OnRpHeartbeat(const uint64, const Packet::RpHeartbeat* InPacket) override;
 	virtual void OnNtMove(const uint64, const Packet::NtMove* InPacket) override;
 

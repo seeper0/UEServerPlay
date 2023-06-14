@@ -38,10 +38,11 @@ namespace Packet
 		RqLogin,
 		RpLogin,
 		NtSpawn,
+		NtLeave,
 		RqHeartbeat,
 		RpHeartbeat,
 		RqMove,
-		NtMove
+		NtMove,
 	};
 
 	struct Header
@@ -74,6 +75,13 @@ namespace Packet
 		uint64		UserId = 0;
 		FVector		Location;
 		FVector		Direction;
+	};
+	
+	struct NtLeave : Header
+	{
+		GENERATED_PACKET(NtLeave);
+
+		uint64		UserId = 0;
 	};
 
 	struct RqHeartbeat : Header

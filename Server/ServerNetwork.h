@@ -15,6 +15,7 @@ public:
 public:
     void Run();
     void NotiPacket(const uint64 InSocket, Packet::Header* InPacket);
+    void SendSpawnAllExceptSelf(const uint64 InSocket);
 
 protected:
     virtual void OnConnected(const uint64 InSocket) override;

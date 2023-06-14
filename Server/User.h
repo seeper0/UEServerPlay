@@ -16,6 +16,10 @@ public:
     ~User();
 
     SOCKET GetSocket() const { return Socket; };
+    uint64 GetUserId() const { return UserId; };
+    const FVector& GetLocation() const { return Location; }
+    const FVector& GetDirection() const { return Direction; }
+    const FVector& GetFaceDirection() const { return FaceDirection; }
 
     void OnRqLogin(const Packet::RqLogin* InPacket);
     void OnRqHeartbeat(const Packet::RqHeartbeat* InPacket);

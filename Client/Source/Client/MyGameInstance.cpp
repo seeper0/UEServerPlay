@@ -182,6 +182,14 @@ void UMyGameInstance::OnNtSpawn(const uint64, const Packet::NtSpawn* InPacket)
 	}
 }
 
+void UMyGameInstance::OnNtLeave(const uint64 InSocket, const Packet::NtLeave* InPacket)
+{
+	if(TScriptInterface<IServerSpawnable>* Remote = PlayerMap.Find(InPacket->UserId))
+	{
+		Remote->GetInterface()->Leave();
+	}
+}
+
 void UMyGameInstance::OnRpHeartbeat(const uint64, const Packet::RpHeartbeat* InPacket)
 {
 }

@@ -29,6 +29,7 @@ public:
 	void Initialize(uint64 InUserId);
 	uint64 GetUserId() const { return UserId; }
 	virtual void  NtMove(const Packet::NtMove* InPacket) {}
+	virtual void Leave() {}
 
 protected:
 	uint64		UserId = 0;

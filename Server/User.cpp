@@ -10,11 +10,17 @@ User::User(class ServerNetwork* InServer, const SOCKET InSocket)
     u_long NonBlockingMode = 1;
     ioctlsocket(Socket, FIONBIO, &NonBlockingMode);
 
+    Server->SendSpawnAllExceptSelf(Socket);
+
     std::cerr << "Connected @" << Socket << std::endl;
 }
 
 User::~User()
 {
+    Packet::NtLeave Packet;
+    Packet.UserId = UserId;
+    Server->NotiPacket(Socket, &Packet);
+
     std::cerr << "Disconnected User @" << Socket << std::endl;
     closesocket(Socket);
 }

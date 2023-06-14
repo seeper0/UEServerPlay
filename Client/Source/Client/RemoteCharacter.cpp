@@ -42,3 +42,8 @@ void ARemoteCharacter::NtMove(const Packet::NtMove* InPacket)
 	//InPacket->FaceDirection
 }
 
+void ARemoteCharacter::Leave()
+{
+	SetLifeSpan(0.1f);
+}
+

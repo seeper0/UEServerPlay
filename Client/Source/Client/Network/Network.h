@@ -20,6 +20,7 @@ protected:
 	virtual void OnRqLogin(const uint64 InSocket, const Packet::RqLogin* InPacket) {}
 	virtual void OnRpLogin(const uint64 InSocket, const Packet::RpLogin* InPacket) {}
 	virtual void OnNtSpawn(const uint64 InSocket, const Packet::NtSpawn* InPacket) {}
+	virtual void OnNtLeave(const uint64 InSocket, const Packet::NtLeave* InPacket) {}
 	virtual void OnRqHeartbeat(const uint64 InSocket, const Packet::RqHeartbeat* InPacket) {}
 	virtual void OnRpHeartbeat(const uint64 InSocket, const Packet::RpHeartbeat* InPacket) {}
 	virtual void OnRqMove(const uint64 InSocket, const Packet::RqMove* InPacket) {}

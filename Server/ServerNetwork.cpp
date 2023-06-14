@@ -77,6 +77,22 @@ void ServerNetwork::NotiPacket(const uint64 InSocket, Packet::Header* InPacket)
     }
 }
 
+void ServerNetwork::SendSpawnAllExceptSelf(const uint64 InSocket)
+{
+    for (auto& Item : UserList)
+    {
+        User* CurrentUser = Item.second;
+        if (CurrentUser->GetSocket() != InSocket)
+        {
+            Packet::NtSpawn Packet;
+            Packet.UserId = CurrentUser->GetUserId();
+            Packet.Location = CurrentUser->GetLocation();
+            Packet.Direction = CurrentUser->GetDirection();
+            SendPacket(InSocket, &Packet);
+        }
+    }
+}
+
 void ServerNetwork::OnConnected(const uint64 InSocket)
 {
 }

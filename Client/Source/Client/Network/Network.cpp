@@ -52,6 +52,7 @@ void Network::ProcessPacket(const uint64 InSocket, const Packet::Header* HeaderP
 		CASE_PACKET(InSocket, RqLogin);
 		CASE_PACKET(InSocket, RpLogin);
 		CASE_PACKET(InSocket, NtSpawn);
+		CASE_PACKET(InSocket, NtLeave);
 		CASE_PACKET(InSocket, RqHeartbeat);
 		CASE_PACKET(InSocket, RpHeartbeat);
 		CASE_PACKET(InSocket, RqMove);
