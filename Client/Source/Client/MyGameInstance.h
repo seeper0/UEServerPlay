@@ -33,13 +33,20 @@ protected: // socket 값은 ClientSocket 와 동일하므로 필요 없다.
 private:
 	int Connect();
 	bool Tick(float DeltaSeconds);
+	bool TickMovement(float DeltaSeconds);
+	bool TickHeartbeat(float DeltaSeconds);
 	void Disconnect();
-	
 	void Cleanup();
 
 	FTSTicker::FDelegateHandle TickDelegateHandle;
+	FTSTicker::FDelegateHandle MovementDelegateHandle;
+	FTSTicker::FDelegateHandle HeartbeatDelegateHandle;
+	
 	uint64 ClientSocket;
-	float MovementSentTimerTime = 0.0f;
+	uint64 PrevHbSentTime;
+	uint64 ServerLatency;
+	uint64 ServerTime;
+	TArray<uint64> HbDeltaTime;
 
 	UPROPERTY()
 	APlayerController* PlayerController = nullptr;

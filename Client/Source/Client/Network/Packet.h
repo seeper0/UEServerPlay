@@ -93,7 +93,7 @@ namespace Packet
 	{
 		GENERATED_PACKET(RpHeartbeat);
 
-		uint64		Timestamp = 0;
+		uint64		ServerTime = 0;
 	};
 
 	struct RqMove : Header

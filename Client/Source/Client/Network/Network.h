@@ -9,6 +9,7 @@ class Network
 public:
 	int32 SendPacket(const uint64 InSocket, Packet::Header* InPacket);
 	int32 ReceivePacket(const uint64 Socket);
+	static uint64 GetMilliseconds();
 
 private:
 	void ProcessPacket(const uint64 InSocket, const Packet::Header* HeaderPacket, char* RawBodyPacket);

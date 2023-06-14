@@ -58,7 +58,7 @@ void User::OnRqHeartbeat(const Packet::RqHeartbeat* InPacket)
         return;
 
     Packet::RpHeartbeat Packet;
-    Packet.Timestamp = GetTickCount64();
+    Packet.ServerTime = ServerNetwork::GetMilliseconds();
     Server->SendPacket(Socket, &Packet);
 }
 

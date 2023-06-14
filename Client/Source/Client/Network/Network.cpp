@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Network.h"
+#include <chrono>
 #undef TEXT
 #include <WS2tcpip.h>
 
@@ -149,6 +150,12 @@ int32 Network::ReceivePacket(const uint64 InSocket)
 	}
 	// what error?
 	return -10;
+}
+
+
+uint64 Network::GetMilliseconds()
+{
+	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 

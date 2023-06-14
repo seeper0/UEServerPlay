@@ -6,17 +6,23 @@
 
 #undef TEXT
 #include <WS2tcpip.h>
+
+#include "Algo/Accumulate.h"
 #include "HAL/Platform.h" // for TEXT
 
 namespace
 {
-	constexpr float MOVE_INTERVAL = 0.1f;	
+	constexpr float MOVEMENT_INTERVAL = 0.1f;	
+	constexpr float HEARTBEAT_INTERVAL = 5.0f;	
 }
 
 DEFINE_LOG_CATEGORY_STATIC(LogClient, Log, All);
 
 UMyGameInstance::UMyGameInstance()
 	: ClientSocket(INVALID_SOCKET)
+	, PrevHbSentTime(0)
+	, ServerLatency(0)
+	, ServerTime(GetMilliseconds()) 
 {
 }
 
@@ -86,6 +92,7 @@ int UMyGameInstance::Connect()
 
 bool UMyGameInstance::Tick(float DeltaSeconds)
 {
+	ServerTime += static_cast<uint64>(DeltaSeconds * 1000);
 	if(PlayerController == nullptr)
 	{
 		PlayerController = GetFirstLocalPlayerController(GetWorld());
@@ -106,22 +113,31 @@ bool UMyGameInstance::Tick(float DeltaSeconds)
 	if (Result < 0 || Result == WSAEDISCON)
 	{
 		UE_LOG(LogClient, Error, TEXT("Disconnected, Err #%d"), Result);
+		OnDisconnected(ClientSocket);
 		Cleanup();
 		return true;
 	}
+	return true;
+}
 
-	MovementSentTimerTime += DeltaSeconds;
-	if(MovementSentTimerTime > MOVE_INTERVAL)
-	{
-		Packet::RqMove Packet;
-		Packet.Timestamp = GetTickCount64();
-		Packet.Location = LocalPlayer->GetActorLocation();
-		Packet.Direction = LocalPlayer->GetActorForwardVector();
-		Packet.FaceDirection = PlayerController->GetControlRotation().Vector();
-		SendPacket(&Packet);
-		MovementSentTimerTime = 0;
-	}
+bool UMyGameInstance::TickMovement(float DeltaSeconds)
+{
+	Packet::RqMove Packet;
+	Packet.Timestamp = GetMilliseconds();
+	Packet.Location = LocalPlayer->GetActorLocation();
+	Packet.Direction = LocalPlayer->GetActorForwardVector();
+	Packet.FaceDirection = PlayerController->GetControlRotation().Vector();
+	SendPacket(&Packet);
 	
+	return true;
+}
+
+bool UMyGameInstance::TickHeartbeat(float DeltaSeconds)
+{
+	PrevHbSentTime = GetMilliseconds();
+	Packet::RqHeartbeat Packet;
+	SendPacket(&Packet);
+
 	return true;
 }
 
@@ -151,6 +167,8 @@ void UMyGameInstance::OnConnected(const uint64)
 
 void UMyGameInstance::OnDisconnected(const uint64)
 {
+	FTSTicker::GetCoreTicker().RemoveTicker(MovementDelegateHandle);
+	FTSTicker::GetCoreTicker().RemoveTicker(HeartbeatDelegateHandle);
 }
 
 void UMyGameInstance::OnRpLogin(const uint64, const Packet::RpLogin* InPacket)
@@ -160,6 +178,9 @@ void UMyGameInstance::OnRpLogin(const uint64, const Packet::RpLogin* InPacket)
 		const FRotator Rotator = InPacket->Direction.ToOrientationRotator();
 		PlayerController->SetControlRotation(Rotator);
 		LocalPlayer->SetActorLocationAndRotation(InPacket->Location, Rotator);
+
+		MovementDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UMyGameInstance::TickMovement), MOVEMENT_INTERVAL);
+		HeartbeatDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UMyGameInstance::TickHeartbeat), HEARTBEAT_INTERVAL);
 	}
 }
 
@@ -192,6 +213,18 @@ void UMyGameInstance::OnNtLeave(const uint64 InSocket, const Packet::NtLeave* In
 
 void UMyGameInstance::OnRpHeartbeat(const uint64, const Packet::RpHeartbeat* InPacket)
 {
+	const uint64 CurrentTime = GetMilliseconds();
+	const uint64 DeltaTime = CurrentTime - PrevHbSentTime;
+	HbDeltaTime.Add(DeltaTime);
+
+	if(HbDeltaTime.Num() > 10)
+	{
+		HbDeltaTime.RemoveAt(0);
+	}
+	
+	ServerLatency = Algo::Accumulate(HbDeltaTime, 0.0) / (HbDeltaTime.Num() * 2); // 반을 나누면 대충 맞을거다
+	ServerTime = InPacket->ServerTime + ServerLatency;
+	//UE_LOG(LogClient, Error, TEXT("ServerLatency %lld, %lld"), ServerTime, ServerLatency);
 }
 
 void UMyGameInstance::OnNtMove(const uint64, const Packet::NtMove* InPacket)
