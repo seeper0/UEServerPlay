@@ -11,3 +11,4 @@ Server/.idea
 Server/.vs
 Server/x64
 Server/Server.vcxproj.*
+Client/Client.uproject.DotSettings.user
