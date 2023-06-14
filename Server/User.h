@@ -28,9 +28,12 @@ public:
 private:
     ServerNetwork* Server = nullptr;
     SOCKET      Socket = INVALID_SOCKET;
-    uint64      UserId;
+    uint64      UserId = 0;
     FVector		Location;
     FVector		Direction;
     FVector		FaceDirection;
+    uint32      MoveMode = 0;
+    FVector		Velocity;
+    FVector		Acceleration;
 };
 

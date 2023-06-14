@@ -28,7 +28,7 @@ class CLIENT_API IServerSpawnable
 public:
 	void Initialize(uint64 InUserId);
 	uint64 GetUserId() const { return UserId; }
-	virtual void  NtMove(const Packet::NtMove* InPacket) {}
+	virtual void NtMove(const Packet::NtMove* InPacket, const uint64 ServerTime) {}
 	virtual void Leave() {}
 
 protected:

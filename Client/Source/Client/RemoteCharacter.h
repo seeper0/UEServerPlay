@@ -27,6 +27,11 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual void NtMove(const Packet::NtMove* InPacket) override;
+	virtual void NtMove(const Packet::NtMove* InPacket, const uint64 ServerTime) override;
 	virtual void Leave() override;
+	
+
+private:
+	UPROPERTY()
+	TObjectPtr<class URemoteMovementComponent> RemoteMovement;
 };

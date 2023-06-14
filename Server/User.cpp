@@ -70,6 +70,9 @@ void User::OnRqMove(const Packet::RqMove* InPacket)
     Location = InPacket->Location;
     Direction = InPacket->Direction;
     FaceDirection = InPacket->FaceDirection;
+    MoveMode = InPacket->MoveMode;
+    Velocity = InPacket->Velocity;
+    Acceleration = InPacket->Acceleration;
 
     // Notify
     {
@@ -78,6 +81,11 @@ void User::OnRqMove(const Packet::RqMove* InPacket)
         Packet.Location = Location;
         Packet.Direction = Direction;
         Packet.FaceDirection = FaceDirection;
+        Packet.MoveMode = MoveMode;
+        Packet.Velocity = Velocity;
+        Packet.Acceleration = Acceleration;
+        Packet.Timestamp = InPacket->Timestamp;
+
         Server->NotiPacket(Socket, &Packet);
     }
 }

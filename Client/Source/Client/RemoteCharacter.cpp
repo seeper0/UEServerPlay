@@ -12,7 +12,7 @@ ARemoteCharacter::ARemoteCharacter(const FObjectInitializer& ObjectInitializer)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	RemoteMovement = Cast<URemoteMovementComponent>(GetCharacterMovement());
 }
 
 // Called when the game starts or when spawned
@@ -36,9 +36,10 @@ void ARemoteCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 }
 
-void ARemoteCharacter::NtMove(const Packet::NtMove* InPacket)
+void ARemoteCharacter::NtMove(const Packet::NtMove* InPacket, const uint64 ServerTime)
 {
 	SetActorLocationAndRotation(InPacket->Location, InPacket->Direction.ToOrientationRotator());
+	RemoteMovement->RecvMove(ServerTime, InPacket->Location, InPacket->Direction, InPacket->FaceDirection, InPacket->MoveMode, InPacket->Acceleration, InPacket->Velocity);
 	//InPacket->FaceDirection
 }
 

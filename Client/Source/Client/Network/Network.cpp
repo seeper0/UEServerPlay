@@ -40,7 +40,7 @@ const Packet::Header* Network::CombinePacket(const Packet::Header* HeaderPacket,
 }
 
 
-#define CASE_PACKET(IN_SOCKET, PACKET_NAME) case HeaderType::PACKET_NAME: On##PACKET_NAME(IN_SOCKET, static_cast<const Packet::PACKET_NAME*>(CombinedPacket)); break
+#define CASE_PACKET(IN_SOCKET, PACKET_NAME) case EHeaderType::PACKET_NAME: On##PACKET_NAME(IN_SOCKET, static_cast<const Packet::PACKET_NAME*>(CombinedPacket)); break
 void Network::ProcessPacket(const uint64 InSocket, const Packet::Header* HeaderPacket, char* RawBodyPacket)
 {
 	if (HeaderPacket == nullptr || RawBodyPacket == nullptr)

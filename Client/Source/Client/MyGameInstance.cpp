@@ -2,18 +2,19 @@
 
 
 #include "MyGameInstance.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Algo/Accumulate.h"
 #include "LocalCharacter.h"
 
 #undef TEXT
 #include <WS2tcpip.h>
-
-#include "Algo/Accumulate.h"
 #include "HAL/Platform.h" // for TEXT
 
 namespace
 {
 	constexpr float MOVEMENT_INTERVAL = 0.1f;	
-	constexpr float HEARTBEAT_INTERVAL = 5.0f;	
+	constexpr float HEARTBEAT_INTERVAL = 5.0f;
+	constexpr float SYNC_LATENCY = 0.1;
 }
 
 DEFINE_LOG_CATEGORY_STATIC(LogClient, Log, All);
@@ -127,6 +128,8 @@ bool UMyGameInstance::TickMovement(float DeltaSeconds)
 	Packet.Location = LocalPlayer->GetActorLocation();
 	Packet.Direction = LocalPlayer->GetActorForwardVector();
 	Packet.FaceDirection = PlayerController->GetControlRotation().Vector();
+	Packet.Velocity = LocalPlayer->GetVelocity();
+	Packet.Acceleration = LocalPlayer->GetCharacterMovement()->GetCurrentAcceleration();
 	SendPacket(&Packet);
 	
 	return true;
@@ -232,6 +235,6 @@ void UMyGameInstance::OnNtMove(const uint64, const Packet::NtMove* InPacket)
 	auto Remote = PlayerMap.Find(InPacket->UserId);
 	if(Remote)
 	{
-		Remote->GetInterface()->NtMove(InPacket);
+		Remote->GetInterface()->NtMove(InPacket, ServerTime);
 	}
 }

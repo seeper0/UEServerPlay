@@ -27,12 +27,22 @@ typedef signed __int64		int64;
 constexpr int MAX_PACKET = 4096;
 constexpr int SERVER_PORT = 30777;
 
-#define GENERATED_PACKET(PACKET_NAME)	PACKET_NAME() : Header(HeaderType::PACKET_NAME, sizeof(PACKET_NAME)) {}
+#define GENERATED_PACKET(PACKET_NAME)	PACKET_NAME() : Header(EHeaderType::PACKET_NAME, sizeof(PACKET_NAME)) {}
 
 #pragma pack(push, 1)
 namespace Packet
 {
-	enum class HeaderType : uint8
+	enum class EMoveMode : uint8
+	{
+		None = 0,
+		Walking = 1,
+		NavWalking = 2,
+		Falling = 4,
+		Sprinting = 8,
+		Swimming = 16
+	};
+	
+	enum class EHeaderType : uint8
 	{
 		None,
 		RqLogin,
@@ -47,16 +57,16 @@ namespace Packet
 
 	struct Header
 	{
-		Header(const HeaderType InHeader, const int16 InSize) : Type(InHeader), BodySize(InSize - sizeof(Header))
+		Header(const EHeaderType InHeader, const int16 InSize) : Type(InHeader), BodySize(InSize - sizeof(Header))
 		{}
-		HeaderType Type;
+		EHeaderType Type;
 		int16 BodySize = 0;
 		int32 GetPacketSize() const { return sizeof(Header) + BodySize; }
 	};
 
 	struct RqLogin : Header
 	{
-		RqLogin() : Header(HeaderType::RqLogin, sizeof(RqLogin)) {}
+		RqLogin() : Header(EHeaderType::RqLogin, sizeof(RqLogin)) {}
 	};
 
 	struct RpLogin : Header
@@ -103,6 +113,9 @@ namespace Packet
 		FVector		Location;
 		FVector		Direction;
 		FVector		FaceDirection;
+		uint32      MoveMode = 0;
+		FVector		Acceleration;
+		FVector		Velocity;
 		uint64		Timestamp = 0;
 	};
 
@@ -114,6 +127,9 @@ namespace Packet
 		FVector		Location;
 		FVector		Direction;
 		FVector		FaceDirection;
+		uint32      MoveMode = 0;
+		FVector		Acceleration;
+		FVector		Velocity;
 		uint64		Timestamp = 0;
 	};
 }

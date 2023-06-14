@@ -67,5 +67,7 @@ public:
 private:
 	UPROPERTY()
 	class UMyGameInstance* MyGameInstance;
+	UPROPERTY()
+	TObjectPtr<class ULocalMovementComponent> LocalMovement;
 };
 

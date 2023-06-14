@@ -27,16 +27,17 @@ ALocalCharacter::ALocalCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationRoll = false;
 
 	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
+	LocalMovement = Cast<ULocalMovementComponent>(GetCharacterMovement());
+	LocalMovement->bOrientRotationToMovement = true; // Character moves in the direction of input...	
+	LocalMovement->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 700.f;
-	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
-	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
-	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+	LocalMovement->JumpZVelocity = 700.f;
+	LocalMovement->AirControl = 0.35f;
+	LocalMovement->MaxWalkSpeed = 500.f;
+	LocalMovement->MinAnalogWalkSpeed = 20.f;
+	LocalMovement->BrakingDecelerationWalking = 2000.f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
