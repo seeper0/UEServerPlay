@@ -7,6 +7,10 @@
 #include "GameFramework/Character.h"
 #include "RemoteCharacter.generated.h"
 
+// https://unreal-mmo-dev.com/2021/10/28/11-create-mmo-server-handle-motion/
+// 스폰 패킷 struct FProxyCharacter
+// 이동 패킷 struct FMotion
+
 UCLASS()
 class CLIENT_API ARemoteCharacter : public ACharacter, public IServerSpawnable
 {
